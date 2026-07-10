@@ -4,8 +4,12 @@ import path from "node:path";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Swappable image storage.
-//   BLOB_DRIVER=local → writes to /public/uploads (default, dev)
-//   BLOB_DRIVER=blob  → Vercel Blob (production)
+//   local → writes to /public/uploads (dev, when no Blob store is connected)
+//   blob  → Vercel Blob (production)
+// Blob mode turns on automatically whenever a Vercel Blob store is connected
+// (BLOB_READ_WRITE_TOKEN present) or BLOB_DRIVER=blob is set explicitly. This
+// matters because Vercel's runtime filesystem is read-only — writing to
+// /public would throw "ENOENT … mkdir /var/task/public".
 // Returns a public URL for the stored file.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -37,7 +41,8 @@ export async function storeImage(file: File): Promise<{ url: string }> {
   const buf = Buffer.from(await file.arrayBuffer());
   const filename = makeName(file.name || "upload", file.type);
 
-  if (process.env.BLOB_DRIVER === "blob") {
+  const useBlob = process.env.BLOB_DRIVER === "blob" || Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  if (useBlob) {
     const { put } = await import("@vercel/blob");
     const blob = await put(`epsos/${filename}`, buf, {
       access: "public",
