@@ -14,7 +14,7 @@ export function BrandMark({ size = 44 }: { size?: number }) {
         height: size,
         borderRadius: size * 0.28,
         background: "linear-gradient(150deg, var(--red-500), var(--red-700))",
-        boxShadow: "0 4px 12px oklch(0.5 0.2 27 / 0.28)",
+        boxShadow: "0 4px 12px color-mix(in oklch, var(--red-600) 28%, transparent)",
       }}
     >
       <svg width={size * 0.68} height={size * 0.68} viewBox="0 0 24 24" fill="none">

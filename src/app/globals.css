@@ -73,7 +73,7 @@
   --shadow-card: 0 1px 2px oklch(0.4 0.03 30 / 0.04), 0 8px 30px oklch(0.4 0.03 30 / 0.06);
   /* Lift includes a soft red glow so hovered surfaces feel lit from the brand. */
   --shadow-lift: 0 2px 6px oklch(0.4 0.03 30 / 0.06), 0 18px 50px oklch(0.4 0.03 30 / 0.12),
-    0 12px 46px oklch(0.6 0.2 27 / 0.13);
+    0 12px 46px color-mix(in oklch, var(--red-500) 14%, transparent);
 
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
@@ -178,13 +178,14 @@
   .btn-primary {
     background: var(--red-600);
     color: white;
-    box-shadow: 0 6px 18px oklch(0.5 0.2 25 / 0.28);
+    box-shadow: 0 6px 18px color-mix(in oklch, var(--red-600) 28%, transparent);
   }
   .btn-primary:hover {
     background: var(--red-700);
     transform: translateY(-2px);
-    box-shadow: 0 10px 26px oklch(0.5 0.2 25 / 0.34),
-      0 0 0 4px oklch(0.637 0.214 27 / 0.16), 0 14px 40px oklch(0.6 0.22 27 / 0.4);
+    box-shadow: 0 10px 26px color-mix(in oklch, var(--red-600) 34%, transparent),
+      0 0 0 4px color-mix(in oklch, var(--red-500) 16%, transparent),
+      0 14px 40px color-mix(in oklch, var(--red-500) 40%, transparent);
   }
   .btn-primary:active {
     transform: translateY(0);
@@ -200,7 +201,7 @@
     color: var(--red-700);
     background: var(--red-50);
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px oklch(0.6 0.2 27 / 0.16);
+    box-shadow: 0 10px 30px color-mix(in oklch, var(--red-500) 16%, transparent);
   }
   .btn-ghost:active {
     transform: translateY(0);
@@ -277,12 +278,12 @@
   }
   .reg-success-badge {
     animation: reg-badge 0.5s var(--ease-out-quart);
-    box-shadow: 0 0 0 0 oklch(0.637 0.214 27 / 0.5);
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--red-500) 50%, transparent);
   }
   @keyframes reg-badge {
-    0% { transform: scale(0.4); opacity: 0; box-shadow: 0 0 0 0 oklch(0.637 0.214 27 / 0.5); }
+    0% { transform: scale(0.4); opacity: 0; box-shadow: 0 0 0 0 color-mix(in oklch, var(--red-500) 50%, transparent); }
     60% { transform: scale(1.08); }
-    100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 18px oklch(0.637 0.214 27 / 0); }
+    100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 18px color-mix(in oklch, var(--red-500) 0%, transparent); }
   }
   @media (prefers-reduced-motion: reduce) {
     .reg-check,
@@ -297,7 +298,7 @@
   .reg-control:focus {
     outline: none;
     border-color: var(--red-500);
-    box-shadow: 0 0 0 4px oklch(0.637 0.214 27 / 0.13);
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--red-500) 14%, transparent);
   }
   .reg-control:disabled {
     opacity: 0.6;
@@ -502,7 +503,7 @@
   .admin-textarea:focus {
     outline: none;
     border-color: var(--red-500);
-    box-shadow: 0 0 0 3px oklch(0.637 0.214 27 / 0.14);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--red-500) 14%, transparent);
   }
   .admin-field-label {
     font-size: 0.85rem;

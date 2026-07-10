@@ -57,7 +57,8 @@ export default function RegisterFab({ label }: { label: string }) {
           font-weight: 700;
           font-size: 1.08rem;
           letter-spacing: 0.01em;
-          box-shadow: 0 14px 34px oklch(0.55 0.22 27 / 0.5), 0 0 0 1px oklch(0.55 0.22 27 / 0.2);
+          box-shadow: 0 14px 34px color-mix(in oklch, var(--red-600) 50%, transparent),
+            0 0 0 1px color-mix(in oklch, var(--red-600) 22%, transparent);
           opacity: 0;
           transform: translateY(24px) scale(0.9);
           pointer-events: none;
@@ -83,7 +84,7 @@ export default function RegisterFab({ label }: { label: string }) {
         .reg-fab:hover {
           transform: translateY(-3px) scale(1.03);
           animation: none;
-          box-shadow: 0 20px 48px oklch(0.55 0.22 27 / 0.6);
+          box-shadow: 0 20px 48px color-mix(in oklch, var(--red-600) 60%, transparent);
         }
         .reg-fab-icon {
           display: inline-flex;

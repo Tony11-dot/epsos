@@ -69,10 +69,11 @@ export default function CursorGlow() {
         zIndex: 30,
         opacity: 0,
         transition: "opacity 0.4s ease",
-        // A luminous warm-red core: bright enough to read as a lighter disc on
-        // the deep-red sections, warm enough to stay visible on near-white paper.
+        // Follows the active theme colour. Uses a lighter step of the brand ramp
+        // (--red-400) so it still reads as a glow over the deep-red sections and
+        // as a tint on near-white paper. On /control it picks up control's colour.
         background:
-          "radial-gradient(circle, oklch(0.78 0.19 38 / 0.32) 0%, oklch(0.74 0.2 34 / 0.14) 38%, transparent 70%)",
+          "radial-gradient(circle, color-mix(in oklch, var(--red-400) 34%, transparent) 0%, color-mix(in oklch, var(--red-400) 14%, transparent) 38%, transparent 70%)",
         willChange: "transform, opacity",
       }}
     />

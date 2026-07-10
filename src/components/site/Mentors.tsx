@@ -19,7 +19,7 @@ export default function Mentors({ mentors }: { mentors: SiteContent["mentors"] }
       </div>
 
       <div className="mt-14">
-        <Marquee speed={Math.max(26, mentors.items.length * 9)}>
+        <Marquee pxPerSecond={40}>
           {mentors.items.map((m) => (
             <button
               key={m.id}

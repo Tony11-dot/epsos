@@ -43,7 +43,7 @@ export default function HonorRoll({ honorRoll }: { honorRoll: SiteContent["honor
       </div>
 
       <div className="mt-14">
-        <Marquee speed={Math.max(28, honorRoll.items.length * 8)}>
+        <Marquee pxPerSecond={38}>
           {honorRoll.items.map((s) => {
             const pct = honorRoll.maxScore > 0 ? Math.min(100, (s.score / honorRoll.maxScore) * 100) : 0;
             return (
