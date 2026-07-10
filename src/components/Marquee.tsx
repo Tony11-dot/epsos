@@ -32,8 +32,8 @@ export default function Marquee({
     if (!w) return;
     const containerW = container.clientWidth;
     // enough copies that (copies-1) sets already fill the container → the shift
-    // of one set width always keeps content on screen.
-    const needed = Math.max(2, Math.ceil(containerW / w) + 1);
+    // of one set width always keeps content on screen. +1 extra as safety margin.
+    const needed = Math.max(3, Math.ceil(containerW / w) + 2);
     setUnitWidth(w);
     setCopies(needed);
   }, []);
@@ -46,7 +46,20 @@ export default function Marquee({
     const ro = new ResizeObserver(() => measure());
     if (containerRef.current) ro.observe(containerRef.current);
     if (unitRef.current) ro.observe(unitRef.current);
-    return () => ro.disconnect();
+
+    // Re-measure once fonts/late layout settle, so copy count is never short.
+    const onLoad = () => measure();
+    window.addEventListener("load", onLoad);
+    if (typeof document !== "undefined" && "fonts" in document) {
+      document.fonts.ready.then(() => measure()).catch(() => {});
+    }
+    const t = window.setTimeout(measure, 400);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("load", onLoad);
+      window.clearTimeout(t);
+    };
   }, [measure]);
 
   const duration = unitWidth > 0 ? unitWidth / pxPerSecond : 30;
@@ -76,6 +89,10 @@ export default function Marquee({
           position: relative;
           width: 100%;
           overflow: hidden;
+          /* Left-align the (wider-than-container) track so it overflows to the
+             right, where scrolling copies fill in. RTL would right-align it and
+             open a gap on the right. Card groups are set back to RTL below. */
+          direction: ltr;
         }
         .mq-fade {
           -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
@@ -84,6 +101,10 @@ export default function Marquee({
         .mq-track {
           display: flex;
           width: max-content;
+          /* Lay the copies left→right so, as content scrolls left, the next copy
+             fills the incoming (right) edge. Without this, RTL right-aligns the
+             track and a gap opens on the right. Cards keep their own RTL below. */
+          direction: ltr;
           animation-name: mq-scroll;
           animation-timing-function: linear;
           animation-iteration-count: infinite;
@@ -93,6 +114,7 @@ export default function Marquee({
         }
         .mq-group {
           display: flex;
+          direction: rtl; /* card order + text stay right-to-left */
           gap: 1.25rem;
           padding-inline-end: 1.25rem; /* keep the seam gap equal to the item gap */
           flex: none;
