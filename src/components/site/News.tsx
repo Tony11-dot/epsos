@@ -7,6 +7,7 @@ import Modal from "@/components/Modal";
 import { CoverImage } from "@/components/Placeholder";
 import SectionHead from "./SectionHead";
 import { Icon } from "@/components/Icon";
+import SectionDecor from "@/components/SectionDecor";
 
 // Deterministic Arabic date — identical on server and client (Intl's ICU
 // output differs between Node and browsers, which caused a hydration mismatch).
@@ -31,6 +32,7 @@ export default function News({ news }: { news: SiteContent["news"] }) {
 
   return (
     <section id="news" className="section">
+      <SectionDecor variant="c" />
       <div className="container-x">
         <SectionHead kicker={news.kicker} title={news.title} />
 

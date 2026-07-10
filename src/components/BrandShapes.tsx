@@ -85,6 +85,58 @@ export function PenTick({
   );
 }
 
+// A small plus/cross — echoes a marked-correct tick and adds rhythm to space.
+export function Plus({
+  className = "",
+  size = 22,
+  color = "var(--accent)",
+  stroke = 3,
+}: {
+  className?: string;
+  size?: number;
+  color?: string;
+  stroke?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+      style={{ pointerEvents: "none" }}
+    >
+      <path d="M12 4V20M4 12H20" stroke={color} strokeWidth={stroke} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// A thin rounded-square outline, tilted — a quiet geometric counterpoint to the rings.
+export function Frame({
+  className = "",
+  size = 90,
+  stroke = "var(--red-200)",
+}: {
+  className?: string;
+  size?: number;
+  stroke?: string;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 90 90"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+      style={{ pointerEvents: "none" }}
+    >
+      <rect x="8" y="8" width="74" height="74" rx="18" stroke={stroke} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 // Faint dotted grid used behind some sections (like ruled paper margins).
 export function DotField({ className = "" }: { className?: string }) {
   return (

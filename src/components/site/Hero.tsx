@@ -2,7 +2,7 @@ import type { SiteContent } from "@/lib/types";
 import Reveal from "@/components/Reveal";
 import CountUp from "@/components/CountUp";
 import HeroUnderline from "@/components/HeroUnderline";
-import { Rings, Disc } from "@/components/BrandShapes";
+import { Rings, Disc, Frame, Plus } from "@/components/BrandShapes";
 import { Icon } from "@/components/Icon";
 
 export default function Hero({
@@ -32,6 +32,26 @@ export default function Hero({
         className="pointer-events-none absolute left-[12%] bottom-[16%] hidden md:block"
         size={10}
         color="var(--red-400)"
+      />
+      <Frame
+        className="pointer-events-none absolute left-[6%] top-[30%] hidden -rotate-12 opacity-70 float-soft lg:block"
+        size={120}
+        stroke="var(--red-100)"
+      />
+      <Frame
+        className="pointer-events-none absolute -right-12.5 bottom-[8%] rotate-12 opacity-60 float-soft"
+        size={160}
+        stroke="var(--red-100)"
+      />
+      <Plus
+        className="pointer-events-none absolute right-[22%] top-[14%] hidden opacity-80 md:block"
+        size={22}
+        color="var(--red-300)"
+      />
+      <Plus
+        className="pointer-events-none absolute left-[24%] top-[10%] hidden opacity-70 lg:block"
+        size={16}
+        color="var(--accent)"
       />
 
       <div className="container-x relative flex flex-col items-center pb-20 pt-16 text-center sm:pt-24">

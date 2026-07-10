@@ -3,6 +3,7 @@ import Reveal from "@/components/Reveal";
 import SectionHead from "./SectionHead";
 import { Icon } from "@/components/Icon";
 import { Rings } from "@/components/BrandShapes";
+import SectionDecor from "@/components/SectionDecor";
 
 export default function Contact({ contact }: { contact: SiteContent["contact"] }) {
   const { info } = contact;
@@ -16,6 +17,7 @@ export default function Contact({ contact }: { contact: SiteContent["contact"] }
 
   return (
     <section id="contact" className="section" style={{ background: "var(--paper-2)" }}>
+      <SectionDecor variant="e" />
       <div className="container-x">
         <div className="relative overflow-hidden rounded-[1.6rem] border border-line bg-[var(--paper)] p-8 shadow-[var(--shadow-card)] sm:p-12">
           <Rings

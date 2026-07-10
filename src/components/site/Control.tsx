@@ -3,6 +3,7 @@ import type { SiteContent } from "@/lib/types";
 import Reveal from "@/components/Reveal";
 import SectionHead from "./SectionHead";
 import { Icon } from "@/components/Icon";
+import SectionDecor from "@/components/SectionDecor";
 
 // Teaser on the main Epsos site — the full كونترول experience lives at /control.
 export default function Control({ control }: { control: SiteContent["control"] }) {
@@ -10,6 +11,7 @@ export default function Control({ control }: { control: SiteContent["control"] }
 
   return (
     <section id="control" className="section">
+      <SectionDecor variant="c" />
       <div className="container-x">
         <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="max-w-xl">

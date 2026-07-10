@@ -7,6 +7,7 @@ import SectionHead from "./SectionHead";
 import Reveal from "@/components/Reveal";
 import { Icon } from "@/components/Icon";
 import { Rings } from "@/components/BrandShapes";
+import SectionDecor from "@/components/SectionDecor";
 
 type Courses = { id: string; title: string }[];
 type Status = "empty" | "valid" | "invalid";
@@ -75,6 +76,7 @@ export default function Register({
 
   return (
     <section id="register" className="section relative overflow-hidden" style={{ background: "var(--paper-2)" }}>
+      <SectionDecor variant="b" />
       <Rings className="pointer-events-none absolute -left-24 top-10 opacity-40" size={260} stroke="var(--red-100)" />
       <div className="container-x relative">
         <div className="grid items-center gap-x-14 gap-y-10 lg:grid-cols-[0.95fr_1.05fr]">

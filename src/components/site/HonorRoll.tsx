@@ -5,6 +5,7 @@ import { Avatar } from "@/components/Placeholder";
 import Marquee from "@/components/Marquee";
 import SectionHead from "./SectionHead";
 import { Icon } from "@/components/Icon";
+import SectionDecor from "@/components/SectionDecor";
 
 // The one drenched-red section: white ink on deep red paper. Real student
 // scores count up. High-contrast (white on red-800) meets WCAG AA.
@@ -16,6 +17,7 @@ export default function HonorRoll({ honorRoll }: { honorRoll: SiteContent["honor
       className="section relative overflow-hidden"
       style={{ background: "linear-gradient(160deg, var(--red-700), var(--red-900))", color: "white" }}
     >
+      <SectionDecor variant="e" tone="light" />
       {/* faint concentric rings watermark */}
       <svg
         className="pointer-events-none absolute -left-24 -top-24 opacity-[0.12] spin-slow"

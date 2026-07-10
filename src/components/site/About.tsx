@@ -3,10 +3,12 @@ import Reveal from "@/components/Reveal";
 import SectionHead from "./SectionHead";
 import { Icon } from "@/components/Icon";
 import { Rings } from "@/components/BrandShapes";
+import SectionDecor from "@/components/SectionDecor";
 
 export default function About({ about }: { about: SiteContent["about"] }) {
   return (
     <section id="about" className="section">
+      <SectionDecor variant="a" />
       <div className="container-x">
         <div className="grid items-start gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           {/* Intro column */}

@@ -4,6 +4,7 @@ import Reveal from "@/components/Reveal";
 import SectionHead from "./SectionHead";
 import { Icon } from "@/components/Icon";
 import { Disc } from "@/components/BrandShapes";
+import SectionDecor from "@/components/SectionDecor";
 
 function PhoneFrame({ shot }: { shot: ImageRef }) {
   return (
@@ -33,6 +34,7 @@ export default function AppShowcase({ app }: { app: SiteContent["app"] }) {
 
   return (
     <section id="app" className="section relative overflow-hidden" style={{ background: "var(--paper-2)" }}>
+      <SectionDecor variant="d" />
       <Disc className="pointer-events-none absolute right-[8%] top-24 opacity-90 float-soft" size={12} color="var(--accent)" />
       <div className="container-x">
         <SectionHead kicker={app.kicker} title={app.title} intro={app.intro} align="center" />
