@@ -37,22 +37,56 @@ const localDriver: Driver = {
 };
 
 // ── Upstash Redis driver ────────────────────────────────────────────────────
+// Resolve the REST URL + token from env. The Upstash/Vercel integration names
+// these differently depending on the "prefix" chosen at install time
+// (UPSTASH_REDIS_REST_*, KV_REST_API_*, or a custom prefix like STORAGE_*), so
+// we accept the known names first and then fall back to pattern-matching any
+// "<PREFIX>_REST_API_URL"/"…_TOKEN" pair. This makes the driver work regardless
+// of how the integration provisioned the variables.
+function redisEnv(): { url: string; token: string } | null {
+  const env = process.env;
+  const entries = Object.entries(env).filter(([, v]) => typeof v === "string" && v);
+
+  const url =
+    env.UPSTASH_REDIS_REST_URL ||
+    env.KV_REST_API_URL ||
+    entries.find(([k]) => /(REDIS_REST_URL|REST_API_URL)$/.test(k))?.[1];
+
+  const token =
+    env.UPSTASH_REDIS_REST_TOKEN ||
+    env.KV_REST_API_TOKEN ||
+    entries.find(([k]) => /(REDIS_REST_TOKEN|REST_API_TOKEN)$/.test(k) && !/READ_ONLY/.test(k))?.[1];
+
+  return url && token ? { url, token } : null;
+}
+
 function redisDriver(): Driver {
   let client: import("@upstash/redis").Redis | null = null;
   async function get() {
     if (!client) {
+      const creds = redisEnv();
+      if (!creds) throw new Error("Upstash Redis env vars not found (need a REST URL + token)");
       const { Redis } = await import("@upstash/redis");
-      client = Redis.fromEnv();
+      client = new Redis({ url: creds.url, token: creds.token });
     }
     return client;
   }
   return {
     async read() {
-      const c = await get();
-      const val = await c.get<SiteContent>(KEY);
-      return val ?? null;
+      // Never 500 the public site on a storage hiccup/misconfig — fall back to
+      // the seed content (returned as null → withDefaults) and log for the operator.
+      try {
+        const c = await get();
+        const val = await c.get<SiteContent>(KEY);
+        return val ?? null;
+      } catch (e) {
+        console.error("[store] redis read failed, serving defaults:", e);
+        return null;
+      }
     },
     async write(content) {
+      // Writes DO surface errors so the admin sees a failed save instead of a
+      // silent no-op.
       const c = await get();
       await c.set(KEY, content);
     },
