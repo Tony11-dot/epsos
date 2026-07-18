@@ -6,7 +6,7 @@
  *
  * SETUP (one time, ~2 minutes):
  *  1. Open the target sheet:
- *     https://docs.google.com/spreadsheets/d/1QINGelW8U5oHSuh_m3S476Xo75YS4QiFuFTleysma4o/edit
+ *     https://docs.google.com/spreadsheets/d/1U3N1ovsUdtTDRCiRXt1q2gD23Y-CnOpD-D3WnhNuyQI/edit
  *  2. Extensions → Apps Script. Delete any sample code, paste ALL of this file.
  *  3. Click Deploy → New deployment → type: "Web app".
  *       - Execute as: Me
@@ -18,9 +18,10 @@
  * The first submission auto-creates the header row.
  */
 
-var SHEET_ID = "1QINGelW8U5oHSuh_m3S476Xo75YS4QiFuFTleysma4o";
+var SHEET_ID = "1U3N1ovsUdtTDRCiRXt1q2gD23Y-CnOpD-D3WnhNuyQI";
 var TAB_NAME = "التسجيلات"; // created automatically if missing
-var HEADERS = ["طابع زمني", "القسم", "الاسم", "العائلة", "الهاتف", "المدينة", "البريد", "الدورة"];
+// Column headers mirror the website's registration form labels (+ timestamp & division).
+var HEADERS = ["طابع زمني", "القسم", "الاسم الشخصي", "اسم العائلة", "رقم الهاتف", "المدينة", "البريد الإلكتروني", "الدورة المهتمّ بها"];
 
 function doPost(e) {
   try {
