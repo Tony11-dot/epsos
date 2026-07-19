@@ -2,10 +2,14 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
-// Seamless, gap-free infinite marquee. It measures one copy of the content and
-// the container, then renders enough copies to always overflow the viewport,
-// shifting by exactly one copy's width so the last item sits flush against the
-// first — no empty spots regardless of how few items there are.
+// Seamless, gap-free infinite marquee that is ALSO hand-scrollable.
+// It measures one copy of the content and the container, renders enough copies
+// to always overflow, and drives the motion by nudging the container's own
+// scrollLeft each frame. Because it's a real scroll container, the user can
+// swipe (touch), drag (trackpad), or wheel through it horizontally at any time;
+// the auto-scroll pauses while they interact and resumes shortly after. When
+// scrolling nears either end we shift by exactly one copy's width, so the loop
+// stays seamless in both directions with no visible jump.
 export default function Marquee({
   children,
   pxPerSecond = 46,
@@ -21,8 +25,10 @@ export default function Marquee({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const unitRef = useRef<HTMLDivElement | null>(null);
-  const [copies, setCopies] = useState(2);
-  const [unitWidth, setUnitWidth] = useState(0);
+  const unitWidthRef = useRef(0);
+  const pausedRef = useRef(false);
+  const resumeTimer = useRef(0);
+  const [copies, setCopies] = useState(4);
 
   const measure = useCallback(() => {
     const unit = unitRef.current;
@@ -31,23 +37,31 @@ export default function Marquee({
     const w = unit.scrollWidth;
     if (!w) return;
     const containerW = container.clientWidth;
-    // enough copies that (copies-1) sets already fill the container → the shift
-    // of one set width always keeps content on screen. +1 extra as safety margin.
-    const needed = Math.max(3, Math.ceil(containerW / w) + 2);
-    setUnitWidth(w);
+    // Enough copies to fill the viewport plus a full copy of wrap buffer on each
+    // side, so the one-copy shift used for looping is never visible.
+    const needed = Math.max(4, Math.ceil(containerW / w) + 3);
+    unitWidthRef.current = w;
     setCopies(needed);
+    // Start in the middle band so there's room to loop both ways immediately.
+    if (container.scrollLeft < w) container.scrollLeft = w;
   }, []);
 
   useLayoutEffect(() => {
     measure();
   }, [measure, children]);
 
+  // Re-seat the scroll position after the copy count (re)renders.
+  useEffect(() => {
+    const c = containerRef.current;
+    const w = unitWidthRef.current;
+    if (c && w && c.scrollLeft < w) c.scrollLeft = w;
+  }, [copies]);
+
   useEffect(() => {
     const ro = new ResizeObserver(() => measure());
     if (containerRef.current) ro.observe(containerRef.current);
     if (unitRef.current) ro.observe(unitRef.current);
 
-    // Re-measure once fonts/late layout settle, so copy count is never short.
     const onLoad = () => measure();
     window.addEventListener("load", onLoad);
     if (typeof document !== "undefined" && "fonts" in document) {
@@ -62,21 +76,83 @@ export default function Marquee({
     };
   }, [measure]);
 
-  const duration = unitWidth > 0 ? unitWidth / pxPerSecond : 30;
+  // Keep the scroll position within the seamless middle band. Called every frame
+  // and after user scrolling; the shift is exactly one copy so it's invisible.
+  const normalize = useCallback(() => {
+    const c = containerRef.current;
+    const w = unitWidthRef.current;
+    if (!c || !w) return;
+    const max = c.scrollWidth - c.clientWidth;
+    if (max <= w) return;
+    if (c.scrollLeft < w) c.scrollLeft += w;
+    else if (c.scrollLeft > max - w) c.scrollLeft -= w;
+  }, []);
+
+  // Auto-scroll loop + interaction pausing.
+  useEffect(() => {
+    const c = containerRef.current;
+    if (!c) return;
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let raf = 0;
+    let last = 0;
+    const dir = reverse ? -1 : 1;
+
+    const step = (now: number) => {
+      if (!last) last = now;
+      const dt = Math.min(0.05, (now - last) / 1000); // clamp long frame gaps
+      last = now;
+      const w = unitWidthRef.current;
+      if (w && !pausedRef.current && !reduce) {
+        c.scrollLeft += dir * pxPerSecond * dt;
+      }
+      normalize();
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+
+    const pause = () => {
+      pausedRef.current = true;
+      window.clearTimeout(resumeTimer.current);
+    };
+    const resumeSoon = () => {
+      window.clearTimeout(resumeTimer.current);
+      resumeTimer.current = window.setTimeout(() => {
+        pausedRef.current = false;
+      }, 1400);
+    };
+    const bump = () => {
+      pause();
+      resumeSoon();
+    };
+
+    // Hover (desktop) pauses so you can read; touch/drag/wheel pause then resume.
+    c.addEventListener("pointerenter", pause);
+    c.addEventListener("pointerleave", resumeSoon);
+    c.addEventListener("pointerdown", pause);
+    c.addEventListener("pointerup", resumeSoon);
+    c.addEventListener("touchstart", pause, { passive: true });
+    c.addEventListener("touchend", resumeSoon, { passive: true });
+    c.addEventListener("wheel", bump, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(resumeTimer.current);
+      c.removeEventListener("pointerenter", pause);
+      c.removeEventListener("pointerleave", resumeSoon);
+      c.removeEventListener("pointerdown", pause);
+      c.removeEventListener("pointerup", resumeSoon);
+      c.removeEventListener("touchstart", pause);
+      c.removeEventListener("touchend", resumeSoon);
+      c.removeEventListener("wheel", bump);
+    };
+  }, [pxPerSecond, reverse, normalize]);
 
   return (
     <div ref={containerRef} className={`mq ${fade ? "mq-fade" : ""} ${className}`}>
-      <div
-        className="mq-track"
-        style={
-          {
-            ["--mq-w"]: `${unitWidth}px`,
-            animationDuration: `${duration}s`,
-            animationDirection: reverse ? "reverse" : "normal",
-            animationPlayState: unitWidth > 0 ? "running" : "paused",
-          } as React.CSSProperties
-        }
-      >
+      <div className="mq-track">
         {Array.from({ length: copies }, (_, i) => (
           <div className="mq-group" key={i} ref={i === 0 ? unitRef : undefined} aria-hidden={i > 0}>
             {children}
@@ -88,11 +164,23 @@ export default function Marquee({
         .mq {
           position: relative;
           width: 100%;
-          overflow: hidden;
-          /* Left-align the (wider-than-container) track so it overflows to the
-             right, where scrolling copies fill in. RTL would right-align it and
-             open a gap on the right. Card groups are set back to RTL below. */
+          /* Real horizontal scroll container: swipe / drag / wheel all work. */
+          overflow-x: auto;
+          overflow-y: hidden;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-x: contain;
+          touch-action: pan-x;
+          scrollbar-width: none;
+          cursor: grab;
+          /* Left-align the (wider-than-container) track so scrollLeft is a normal
+             0→right value. Card groups are set back to RTL below. */
           direction: ltr;
+        }
+        .mq::-webkit-scrollbar {
+          display: none;
+        }
+        .mq:active {
+          cursor: grabbing;
         }
         .mq-fade {
           -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
@@ -101,16 +189,7 @@ export default function Marquee({
         .mq-track {
           display: flex;
           width: max-content;
-          /* Lay the copies left→right so, as content scrolls left, the next copy
-             fills the incoming (right) edge. Without this, RTL right-aligns the
-             track and a gap opens on the right. Cards keep their own RTL below. */
           direction: ltr;
-          animation-name: mq-scroll;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
-        }
-        .mq:hover .mq-track {
-          animation-play-state: paused !important;
         }
         .mq-group {
           display: flex;
@@ -118,22 +197,6 @@ export default function Marquee({
           gap: 1.25rem;
           padding-inline-end: 1.25rem; /* keep the seam gap equal to the item gap */
           flex: none;
-        }
-        @keyframes mq-scroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(calc(-1 * var(--mq-w))); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .mq {
-            overflow-x: auto;
-            scrollbar-width: none;
-          }
-          .mq-track {
-            animation: none;
-          }
-          .mq-group:not(:first-child) {
-            display: none;
-          }
         }
       `}</style>
     </div>
