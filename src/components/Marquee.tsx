@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 // Seamless, gap-free infinite marquee that is ALSO hand-scrollable.
-// It measures one copy of the content and the container, renders enough copies
-// to always overflow, and drives the motion by nudging the container's own
-// scrollLeft each frame. Because it's a real scroll container, the user can
-// swipe (touch), drag (trackpad), or wheel through it horizontally at any time;
-// the auto-scroll pauses while they interact and resumes shortly after. When
-// scrolling nears either end we shift by exactly one copy's width, so the loop
-// stays seamless in both directions with no visible jump.
+// It measures one copy of the content, renders enough copies to always overflow,
+// and drives the motion by nudging the container's own scrollLeft each frame.
+// Because it's a real scroll container, the user can swipe / drag / wheel through
+// it at any time, and the auto-cycle keeps running and coexists with that.
+//
+// NOTE: Safari rounds scrollLeft to whole integers, so reading it back and adding
+// a sub-pixel delta each frame loses the fraction and the marquee never moves.
+// We therefore keep the intended position as a float accumulator (posRef) and set
+// scrollLeft from it; when the user scrolls, we adopt their position and continue.
 export default function Marquee({
   children,
   pxPerSecond = 46,
@@ -26,6 +28,7 @@ export default function Marquee({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const unitRef = useRef<HTMLDivElement | null>(null);
   const unitWidthRef = useRef(0);
+  const posRef = useRef(0);
   const pausedRef = useRef(false);
   const resumeTimer = useRef(0);
   const [copies, setCopies] = useState(4);
@@ -43,7 +46,10 @@ export default function Marquee({
     unitWidthRef.current = w;
     setCopies(needed);
     // Start in the middle band so there's room to loop both ways immediately.
-    if (container.scrollLeft < w) container.scrollLeft = w;
+    if (container.scrollLeft < w) {
+      container.scrollLeft = w;
+      posRef.current = w;
+    }
   }, []);
 
   useLayoutEffect(() => {
@@ -54,7 +60,10 @@ export default function Marquee({
   useEffect(() => {
     const c = containerRef.current;
     const w = unitWidthRef.current;
-    if (c && w && c.scrollLeft < w) c.scrollLeft = w;
+    if (c && w && c.scrollLeft < w) {
+      c.scrollLeft = w;
+      posRef.current = w;
+    }
   }, [copies]);
 
   useEffect(() => {
@@ -76,19 +85,8 @@ export default function Marquee({
     };
   }, [measure]);
 
-  // Keep the scroll position within the seamless middle band. Called every frame
-  // and after user scrolling; the shift is exactly one copy so it's invisible.
-  const normalize = useCallback(() => {
-    const c = containerRef.current;
-    const w = unitWidthRef.current;
-    if (!c || !w) return;
-    const max = c.scrollWidth - c.clientWidth;
-    if (max <= w) return;
-    if (c.scrollLeft < w) c.scrollLeft += w;
-    else if (c.scrollLeft > max - w) c.scrollLeft -= w;
-  }, []);
-
-  // Auto-scroll loop + interaction pausing.
+  // Auto-cycle loop. Always runs; coexists with wheel/trackpad scrolling (we
+  // adopt the user's position); only yields to an in-progress touch drag.
   useEffect(() => {
     const c = containerRef.current;
     if (!c) return;
@@ -98,25 +96,44 @@ export default function Marquee({
 
     let raf = 0;
     let last = 0;
+    let expected = -1; // the (rounded) value we last wrote, to detect user scroll
     const dir = reverse ? -1 : 1;
 
     const step = (now: number) => {
       if (!last) last = now;
       const dt = Math.min(0.05, (now - last) / 1000); // clamp long frame gaps
       last = now;
+
       const w = unitWidthRef.current;
-      if (w && !pausedRef.current && !reduce) {
-        c.scrollLeft += dir * pxPerSecond * dt;
+      const max = c.scrollWidth - c.clientWidth;
+      if (w && max > w) {
+        const actual = c.scrollLeft;
+        if (pausedRef.current || reduce) {
+          // Let the user own the scroll; stay in sync so we resume from here.
+          posRef.current = actual;
+          expected = actual;
+        } else {
+          if (expected < 0) posRef.current = actual; // first frame
+          // If the user wheeled/dragged since our last write, adopt their spot.
+          else if (Math.abs(actual - expected) > 2) posRef.current = actual;
+
+          posRef.current += dir * pxPerSecond * dt;
+
+          // Keep within the seamless middle band; a one-copy shift is invisible.
+          if (posRef.current < w) posRef.current += w;
+          else if (posRef.current > max - w) posRef.current -= w;
+
+          c.scrollLeft = posRef.current;
+          expected = c.scrollLeft; // read back the rounded value we actually got
+        }
       }
-      normalize();
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
 
-    // The auto-cycle always runs. Wheel/trackpad scrolling coexists with it
-    // (native scroll just adds to scrollLeft). We only yield to an active touch
-    // drag — continuously setting scrollLeft would fight the finger/momentum —
-    // then resume the cycle a moment after the finger lifts.
+    // Only an active touch drag pauses the cycle (so it doesn't fight the finger
+    // or its momentum); it resumes shortly after the finger lifts. Wheel/trackpad
+    // scrolling on desktop is NOT paused — it coexists with the running cycle.
     const pause = () => {
       pausedRef.current = true;
       window.clearTimeout(resumeTimer.current);
@@ -139,7 +156,7 @@ export default function Marquee({
       c.removeEventListener("touchend", resumeSoon);
       c.removeEventListener("touchcancel", resumeSoon);
     };
-  }, [pxPerSecond, reverse, normalize]);
+  }, [pxPerSecond, reverse]);
 
   return (
     <div ref={containerRef} className={`mq ${fade ? "mq-fade" : ""} ${className}`}>
@@ -160,7 +177,6 @@ export default function Marquee({
           overflow-y: hidden;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-x: contain;
-          touch-action: pan-x;
           scrollbar-width: none;
           cursor: grab;
           /* Left-align the (wider-than-container) track so scrollLeft is a normal
