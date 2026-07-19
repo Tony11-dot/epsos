@@ -113,6 +113,10 @@ export default function Marquee({
     };
     raf = requestAnimationFrame(step);
 
+    // The auto-cycle always runs. Wheel/trackpad scrolling coexists with it
+    // (native scroll just adds to scrollLeft). We only yield to an active touch
+    // drag — continuously setting scrollLeft would fight the finger/momentum —
+    // then resume the cycle a moment after the finger lifts.
     const pause = () => {
       pausedRef.current = true;
       window.clearTimeout(resumeTimer.current);
@@ -121,32 +125,19 @@ export default function Marquee({
       window.clearTimeout(resumeTimer.current);
       resumeTimer.current = window.setTimeout(() => {
         pausedRef.current = false;
-      }, 1400);
-    };
-    const bump = () => {
-      pause();
-      resumeSoon();
+      }, 600);
     };
 
-    // Hover (desktop) pauses so you can read; touch/drag/wheel pause then resume.
-    c.addEventListener("pointerenter", pause);
-    c.addEventListener("pointerleave", resumeSoon);
-    c.addEventListener("pointerdown", pause);
-    c.addEventListener("pointerup", resumeSoon);
     c.addEventListener("touchstart", pause, { passive: true });
     c.addEventListener("touchend", resumeSoon, { passive: true });
-    c.addEventListener("wheel", bump, { passive: true });
+    c.addEventListener("touchcancel", resumeSoon, { passive: true });
 
     return () => {
       cancelAnimationFrame(raf);
       window.clearTimeout(resumeTimer.current);
-      c.removeEventListener("pointerenter", pause);
-      c.removeEventListener("pointerleave", resumeSoon);
-      c.removeEventListener("pointerdown", pause);
-      c.removeEventListener("pointerup", resumeSoon);
       c.removeEventListener("touchstart", pause);
       c.removeEventListener("touchend", resumeSoon);
-      c.removeEventListener("wheel", bump);
+      c.removeEventListener("touchcancel", resumeSoon);
     };
   }, [pxPerSecond, reverse, normalize]);
 
