@@ -30,7 +30,7 @@ export default function Marquee({
   const unitWidthRef = useRef(0);
   const posRef = useRef(0);
   const pausedRef = useRef(false);
-  const resumeTimer = useRef(0);
+  const pendingResumeRef = useRef(false);
   const [copies, setCopies] = useState(4);
 
   const measure = useCallback(() => {
@@ -97,6 +97,8 @@ export default function Marquee({
     let raf = 0;
     let last = 0;
     let expected = -1; // the (rounded) value we last wrote, to detect user scroll
+    let settleFrames = 0; // consecutive still frames while waiting for momentum
+    let lastSettle = -1;
     const dir = reverse ? -1 : 1;
 
     const step = (now: number) => {
@@ -112,16 +114,38 @@ export default function Marquee({
           // Let the user own the scroll; stay in sync so we resume from here.
           posRef.current = actual;
           expected = actual;
+          // After a fling, the finger is up but native momentum is still
+          // decelerating. Only take the cycle back once scrollLeft has stopped
+          // changing, so we never halt an in-flight momentum scroll.
+          if (pausedRef.current && pendingResumeRef.current) {
+            if (lastSettle >= 0 && Math.abs(actual - lastSettle) < 0.5) settleFrames++;
+            else settleFrames = 0;
+            lastSettle = actual;
+            if (settleFrames >= 6) {
+              pausedRef.current = false;
+              pendingResumeRef.current = false;
+              settleFrames = 0;
+              lastSettle = -1;
+            }
+          }
         } else {
+          let adopted = false;
           if (expected < 0) posRef.current = actual; // first frame
           // If the user wheeled/dragged since our last write, adopt their spot.
-          else if (Math.abs(actual - expected) > 2) posRef.current = actual;
+          else if (Math.abs(actual - expected) > 0.5) {
+            posRef.current = actual;
+            adopted = true;
+          }
 
           posRef.current += dir * pxPerSecond * dt;
 
           // Keep within the seamless middle band; a one-copy shift is invisible.
-          if (posRef.current < w) posRef.current += w;
-          else if (posRef.current > max - w) posRef.current -= w;
+          // Skip on the frame we adopt a user jump so we never yank the viewport
+          // mid-gesture — it wraps on a later frame once they settle.
+          if (!adopted) {
+            if (posRef.current < w) posRef.current += w;
+            else if (posRef.current > max - w) posRef.current -= w;
+          }
 
           c.scrollLeft = posRef.current;
           expected = c.scrollLeft; // read back the rounded value we actually got
@@ -136,13 +160,11 @@ export default function Marquee({
     // scrolling on desktop is NOT paused — it coexists with the running cycle.
     const pause = () => {
       pausedRef.current = true;
-      window.clearTimeout(resumeTimer.current);
+      pendingResumeRef.current = false;
     };
+    // Arm resume; the step loop actually un-pauses once native momentum settles.
     const resumeSoon = () => {
-      window.clearTimeout(resumeTimer.current);
-      resumeTimer.current = window.setTimeout(() => {
-        pausedRef.current = false;
-      }, 600);
+      pendingResumeRef.current = true;
     };
 
     c.addEventListener("touchstart", pause, { passive: true });
@@ -151,7 +173,6 @@ export default function Marquee({
 
     return () => {
       cancelAnimationFrame(raf);
-      window.clearTimeout(resumeTimer.current);
       c.removeEventListener("touchstart", pause);
       c.removeEventListener("touchend", resumeSoon);
       c.removeEventListener("touchcancel", resumeSoon);
@@ -177,6 +198,9 @@ export default function Marquee({
           overflow-y: hidden;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-x: contain;
+          /* Horizontal pans belong to this scroller; vertical page scroll and
+             edge back/forward swipes pass through untouched. */
+          touch-action: pan-x;
           scrollbar-width: none;
           cursor: grab;
           /* Left-align the (wider-than-container) track so scrollLeft is a normal
