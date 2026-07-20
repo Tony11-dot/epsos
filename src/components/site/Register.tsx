@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import type { SiteContent } from "@/lib/types";
 import { submitRegistrationAction } from "@/app/register-actions";
 import SectionHead from "./SectionHead";
@@ -182,7 +183,16 @@ export default function Register({
                     {!submitting && <Icon name="arrow" size={18} />}
                   </button>
 
-                  <p className="text-center text-xs leading-relaxed text-muted">{registration.consentNote}</p>
+                  <p className="text-center text-xs leading-relaxed text-muted">
+                    {registration.consentNote}{" "}
+                    <Link
+                      href="/privacy"
+                      className="font-semibold underline underline-offset-2 transition-colors hover:text-red-700"
+                    >
+                      اطّلع على سياسة الخصوصية
+                    </Link>
+                    .
+                  </p>
                 </form>
               )}
             </div>

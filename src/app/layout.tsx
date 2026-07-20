@@ -35,6 +35,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const c = await getContent();
   const title = `${c.brand.name} — ${c.brand.tagline}`;
   return {
+    // Canonical host (apex 308-redirects to www), so relative canonical/OG
+    // URLs on sub-routes resolve to absolute ones.
+    metadataBase: new URL("https://www.epsos.co.il"),
     title,
     description: c.hero.subhead,
     openGraph: { title, description: c.hero.subhead, locale: "ar_IL", type: "website" },

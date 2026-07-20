@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ControlSite } from "@/lib/types";
 import { BrandMark } from "@/components/Wordmark";
 import { Icon } from "@/components/Icon";
+import { LEGAL_LINKS } from "@/lib/legal";
 
 export default function ControlFooter({ site }: { site: ControlSite }) {
   const { contact } = site;
@@ -36,7 +37,22 @@ export default function ControlFooter({ site }: { site: ControlSite }) {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/12 pt-6 text-sm text-white/55 sm:flex-row">
+        <nav
+          aria-label="مستندات قانونية"
+          className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/12 pt-6 text-sm"
+        >
+          {LEGAL_LINKS.map((l) => (
+            <Link
+              key={l.slug}
+              href={l.href}
+              className="text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="mt-5 flex flex-col items-center justify-between gap-3 text-sm text-white/55 sm:flex-row">
           <Link href="/" className="inline-flex items-center gap-1.5 hover:text-white/85">
             <Icon name="arrowRight" size={15} /> {site.familyNote} — العودة للموقع الرئيسي
           </Link>

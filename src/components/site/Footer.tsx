@@ -1,17 +1,25 @@
+import Link from "next/link";
 import type { SiteContent } from "@/lib/types";
 import Wordmark from "@/components/Wordmark";
 import { Icon } from "@/components/Icon";
+import { LEGAL_LINKS } from "@/lib/legal";
 
 export default function Footer({
   brand,
   nav,
   footer,
   socials,
+  hashPrefix = "",
 }: {
   brand: SiteContent["brand"];
   nav: SiteContent["nav"];
   footer: SiteContent["footer"];
   socials: SiteContent["contact"]["info"]["socials"];
+  /**
+   * Prefix for in-page anchors. Empty on the home page (plain "#about" keeps
+   * smooth scrolling); "/" on sub-routes so the link navigates home first.
+   */
+  hashPrefix?: string;
 }) {
   return (
     <footer style={{ background: "var(--red-950)", color: "oklch(0.94 0.01 40)" }}>
@@ -29,7 +37,10 @@ export default function Footer({
             <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2">
               {nav.links.map((l) => (
                 <li key={l.id}>
-                  <a href={l.href} className="text-white/80 transition-colors hover:text-white">
+                  <a
+                    href={l.href.startsWith("#") ? `${hashPrefix}${l.href}` : l.href}
+                    className="text-white/80 transition-colors hover:text-white"
+                  >
                     {l.label}
                   </a>
                 </li>
@@ -58,7 +69,22 @@ export default function Footer({
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/12 pt-6 text-sm text-white/55 sm:flex-row">
+        <nav
+          aria-label="مستندات قانونية"
+          className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/12 pt-6 text-sm"
+        >
+          {LEGAL_LINKS.map((l) => (
+            <Link
+              key={l.slug}
+              href={l.href}
+              className="text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="mt-5 flex flex-col items-center justify-between gap-3 text-sm text-white/55 sm:flex-row">
           <span>{footer.credit}</span>
           <span className="inline-flex items-center gap-1.5">
             {brand.tagline}
