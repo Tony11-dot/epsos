@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { loginAction, type LoginState } from "../actions";
 import { Icon } from "@/components/Icon";
 import { Rings, Disc } from "@/components/BrandShapes";
@@ -9,6 +9,7 @@ const initial: LoginState = {};
 
 export default function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, initial);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-16">
@@ -42,15 +43,28 @@ export default function LoginForm() {
           <form action={formAction} className="flex flex-col gap-4">
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-ink">كلمة المرور</span>
-              <input
-                type="password"
-                name="password"
-                autoFocus
-                required
-                autoComplete="current-password"
-                className="admin-input"
-                placeholder="••••••••"
-              />
+              <div className="relative" dir="ltr">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoFocus
+                  required
+                  dir="ltr"
+                  autoComplete="current-password"
+                  className="admin-input"
+                  style={{ paddingInlineEnd: "2.75rem" }}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 inset-e-0 grid w-11 place-items-center text-muted transition hover:text-ink"
+                >
+                  <Icon name={showPassword ? "eyeOff" : "eye"} size={20} />
+                </button>
+              </div>
             </label>
 
             {state.error ? (

@@ -125,6 +125,12 @@ const PATHS: Record<string, React.ReactNode> = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  eyeOff: (
+    <>
+      <path d="M2.5 12S6 5.5 12 5.5c1.4 0 2.7.26 3.86.7M21.5 12S18 18.5 12 18.5c-1.4 0-2.7-.26-3.86-.7M4 4l16 16" />
+      <path d="M9.9 9.9a3 3 0 004.2 4.2" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof PATHS;
