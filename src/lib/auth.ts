@@ -6,14 +6,18 @@ import { SESSION_COOKIE } from "./session-cookie";
 // ─────────────────────────────────────────────────────────────────────────
 // Password auth with a signed (HMAC-SHA256) session cookie.
 // No database: a valid password mints a signed token; pages/API verify the
-// signature and expiry. Secret + password come from env.
+// signature and expiry. Secret + password come from env only: this repo is
+// public, so a default written here is one anyone can read. Unset means
+// nobody signs in and no cookie verifies.
 // ─────────────────────────────────────────────────────────────────────────
 
 export { SESSION_COOKIE };
 const MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 function secret(): string {
-  return process.env.SESSION_SECRET || "epsos-dev-secret-change-me";
+  const s = process.env.SESSION_SECRET;
+  if (!s) throw new Error("SESSION_SECRET is not set");
+  return s;
 }
 
 function sign(payload: string): string {
@@ -29,7 +33,7 @@ export function createSessionToken(): string {
 
 /** Verify a token's signature and expiry (Edge/runtime-safe: pure crypto). */
 export function verifySessionToken(token: string | undefined): boolean {
-  if (!token) return false;
+  if (!token || !process.env.SESSION_SECRET) return false;
   const [payload, sig] = token.split(".");
   if (!payload || !sig) return false;
   const expected = sign(payload);
@@ -41,7 +45,8 @@ export function verifySessionToken(token: string | undefined): boolean {
 }
 
 export function checkPassword(input: string): boolean {
-  const expected = process.env.ADMIN_PASSWORD || "epsos2024";
+  const expected = process.env.ADMIN_PASSWORD;
+  if (!expected) return false;
   const a = Buffer.from(input || "");
   const b = Buffer.from(expected);
   if (a.length !== b.length) return false;
